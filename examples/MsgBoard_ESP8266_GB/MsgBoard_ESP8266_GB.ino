@@ -168,6 +168,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 	if (length<6)
 	{
+		LEDMATRIX.turnOff();
+		DisplayMode = 0;
 		return;
 	}
 	char mode;
