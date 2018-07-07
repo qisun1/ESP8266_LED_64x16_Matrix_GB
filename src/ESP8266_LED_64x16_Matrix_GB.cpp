@@ -77,6 +77,7 @@ void ESP8266_LED_64x16_Matrix_GB::setPins(uint8_t pins[8])
 //0xaa is not used in qu code of GB2312
 void ESP8266_LED_64x16_Matrix_GB::setMessage(String inputMessage)
 {
+	message = "";
 	char extraFontPointer = 0;
 	for (uint8_t i = 0; i < inputMessage.length(); i = i + 2) {
 		char t = (char)inputMessage[i];
