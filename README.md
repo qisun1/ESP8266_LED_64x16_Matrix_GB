@@ -7,7 +7,7 @@ I am still testing it. It should work with one or multiple 64x16 LED matrix (red
 
 I directly connect pins of the nodemcu to the LED matrix. I do not use level shift between the board and the LED matrix. 
 
-
+In your sketch, you might need to add "delay(4000)" at the beginning of "setup". It is needed on my sketch, otherwise it would cause reset once timer1 is enabled. I do not why, maybe the startup series of ESP8266 has conflict with the timer1.
 
 ## Examples
 
@@ -16,6 +16,7 @@ In examples directory.
 ## Limitations
 The current code does not yet implement pins for green color as well as data_r2 pin used for 64x32 matrix. Slight modification is needed. I am probably not going to do that as I only have red color matrix. After this project, I am going to switch RGB LED matrix.
 
+In my code, I limit to 100 Chinese characters in a message.
 
 
 ## Compatible Hardware
