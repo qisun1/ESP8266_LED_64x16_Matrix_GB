@@ -10,15 +10,15 @@
 
 
 /************ connection pins ******************/
-#define latchPin D1
-#define clockPin D2
-#define data_R1 D3
-//const byte data_R2 = 11;
-#define en_74138 D0
-#define la_74138 D8
-#define lb_74138 D7
+#define la_74138 D0
+#define lb_74138 D5
 #define lc_74138 D6
-#define ld_74138 D5
+#define ld_74138 D7
+#define latchPin D8
+#define clockPin D4
+#define en_74138 D1
+#define data_R1 D2
+#define data_R2 D3
 
 /************ WIFI and MQTT Information (CHANGE THESE FOR YOUR SETUP) ******************/
 #define DEVICENAME "msgboard_gb"
