@@ -8,17 +8,19 @@
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 
+// Connections to board
+// latchPin must be D0
+#define latchPin D0
 
-/************ connection pins ******************/
-#define la_74138 D0
-#define lb_74138 D5
+//The following pin can be changed if needed
+#define clockPin D1
+#define data_R1 D3
+#define data_R2 D2
+#define en_74138 D4
+#define la_74138 D8
+#define lb_74138 D7
 #define lc_74138 D6
-#define ld_74138 D7
-#define latchPin D8
-#define clockPin D4
-#define en_74138 D1
-#define data_R1 D2
-#define data_R2 D3
+#define ld_74138 D5 
 
 /************ WIFI and MQTT Information (CHANGE THESE FOR YOUR SETUP) ******************/
 #define DEVICENAME "msgboard_gb"
@@ -62,7 +64,8 @@ void setup()
 	uint8_t t[8] = { latchPin, clockPin, data_R1, en_74138, la_74138, lb_74138, lc_74138, ld_74138 };
 	LEDMATRIX.setPins(t);
 
-	//screen mode is an integer code: 0:64x16 1:128x16;
+	//screen mode 0: 0:64x16 single color red
+	//number of panels: 1
 	LEDMATRIX.setDisplay(0, 1);
 
 }
