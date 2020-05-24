@@ -7,6 +7,8 @@
 #include "ESP8266_LED_64x16_Matrix_GB.h"
 #include "Arduino.h"
 
+//if true, hang it upside up
+#define frameOrientation  false
 
 ESP8266_LED_64x16_Matrix_GB::ESP8266_LED_64x16_Matrix_GB()
 {
@@ -236,6 +238,8 @@ void ESP8266_LED_64x16_Matrix_GB::shiftOutFast(byte data)
 {
 	byte i = 8;
 	do {
+
+#if (frameOrientation)
 		GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, 1 << clockPin);
 		if (data & 0x80)
 			GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, 1 << data_R1);
@@ -243,6 +247,19 @@ void ESP8266_LED_64x16_Matrix_GB::shiftOutFast(byte data)
 			GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, 1 << data_R1);
 		GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, 1 << clockPin);
 		data <<= 1;
+#else
+		GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, 1 << clockPin);
+		if (data & 0x01)
+			GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, 1 << data_R1);
+		else
+			GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, 1 << data_R1);
+		GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, 1 << clockPin);
+		data >>= 1;
+#endif
+
+
+
+
 	} while (--i);
 	return;
 }
@@ -330,12 +347,21 @@ void  ESP8266_LED_64x16_Matrix_GB::ISR_TIMER_SCAN()
 	rowPinSet = rowPinSet | ((scanRow & 0x01) << la_74138);
 	WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 4, rowPinSet);
 
-	// Shift out 8 columns
+#if (frameOrientation )
 	for (uint8_t column = 0; column < columnNumber; column++) {
 		uint8_t index = column + (scanRow *(columnNumber + 1));
 		//shiftOut(data_R1, clockPin, MSBFIRST, buffer[index]);
 		shiftOutFast(buffer[index]);
 	}
+#else
+	for (uint8_t column = 0; column < columnNumber; column++) {
+		uint8_t index = column + (scanRow *(columnNumber + 1));
+		//shiftOut(data_R1, clockPin, MSBFIRST, buffer[index]);
+		shiftOutFast(buffer[bufferSize - 1 - index]);
+	}
+#endif
+
+
 
 	//digitalWrite(latchPin, LOW);
 	GP16O &= ~1;
