@@ -24,11 +24,11 @@
 
 /************ WIFI and MQTT Information (CHANGE THESE FOR YOUR SETUP) ******************/
 #define DEVICENAME "msgboard_gb"
-#define mywifi_ssid "xxxxxxxxxx"
-#define mywifi_password "xxxxxxxxxx"
-#define mymqtt_server "xxxxxxxxxxx"
+#define mywifi_ssid "xxxxxxxxxxx"
+#define mywifi_password "xxxxxxxxxxxxx"
+#define mymqtt_server "xxxxxxxxxxxx"
 
-#define mqtt_password  "xxxxxxxxxxxx"
+#define mqtt_password  "xxxxxxxxxxx"
 #define mymqtt_port 1883
 
 const char* topic_message = "message/" DEVICENAME;
@@ -47,69 +47,127 @@ unsigned long message_lifetime;
 //2 for scroll vertical
 uint8_t DisplayMode = 0;
 
+uint8_t Operation = 0; 
+//0 turn of wifi to receive message; 1 to turn off wifi and display message
+//with wifi on,  display not stable
+
 void setup()
 {
+	WiFi.mode(WIFI_OFF);
 	Serial.begin(115200);
 
+	//I do not know why, this 4 seconds delay is necessary on my board to get things to work
+	delay(2000);
+
+	//set mqtt
+	Serial.println("set mqtt server");
 	mqttClient.setServer(mymqtt_server, mymqtt_port);
 	mqttClient.setCallback(callback);
+	Serial.println("mqtt set");
 
-	setup_wifi();
-	connect_mqtt();
-
-	//I do not know why, this 4 seconds delay is necessary on my board to get things to work
-	delay(3000);
-
-	Serial.println("begin");
+	Serial.println("set up the display");
 	uint8_t t[8] = { latchPin, clockPin, data_R1, en_74138, la_74138, lb_74138, lc_74138, ld_74138 };
 	LEDMATRIX.setPins(t);
-
 	//screen mode 0: 0:64x16 single color red
 	//number of panels: 1
 	LEDMATRIX.setDisplay(0, 1);
+	Serial.println("display_set");
 
+	Operation == 0;
+	WiFi.mode(WIFI_STA);
+	setup_wifi();
+	connect_mqtt();
+	Serial.println("all, set, waiting for msg .... ");
 }
 
 void loop()
 {
-	if ((millis() - message_timestamp) > message_lifetime)
+	if (Operation == 0)
 	{
-		LEDMATRIX.turnOff();
-		DisplayMode = 0;
-	}
-
-	switch (DisplayMode)
-	{
-		case 1: 
-			LEDMATRIX.scrollTextHorizontal(100);
-			break;
-		case 2:
-			LEDMATRIX.scrollTextVertical(1000);
-			break;
-		case 3:
-			LEDMATRIX.BreakTextInFrames(1000);
-			break;
-		default:
-			delay(200);
-			break;
-	}
-
-	if (WiFi.status() != WL_CONNECTED) {
-		setup_wifi();
-		return;
-	}
-
-
-	if (mqttClient.connected()) {
-		mqttClient.loop();
-
+		if (WiFi.status() != WL_CONNECTED) {
+			setup_wifi();
+			return;
+		}
+		if (mqttClient.connected()) {
+			mqttClient.loop();
+			if (Operation == 1)
+			{
+				mqttClient.disconnect();
+				WiFi.disconnect();
+				WiFi.mode(WIFI_OFF);
+				Serial.println("wifi off");
+				LEDMATRIX.setMessage(message);
+				LEDMATRIX.turnOn();
+				Serial.println("display on");
+			}
+		}
+		else
+		{
+			connect_mqtt();
+			return;
+		}
 	}
 	else
 	{
-		connect_mqtt();
-		return;
+		if ((millis() - message_timestamp) > message_lifetime)
+		{
+			Serial.println("time is up, turn off display");
+			LEDMATRIX.turnOff();
+
+			Serial.println("turn on wifi");
+			WiFi.mode(WIFI_STA);
+			setup_wifi();
+			connect_mqtt();
+			Serial.println("all set, waiting for msg .... ");
+			Operation = 0;
+		}
+		else
+		{
+			LEDMATRIX.scrollTextHorizontal(100);
+		}
+		
 	}
 }
+
+void callback(char* topic, byte* payload, unsigned int length) {
+
+	// first byte in message is the dispaly mode 
+	// the following 4 bytes are display time
+	// the rest bytes are data, two byte per character. first byte 0xaa are ascii characters.
+	// for ascii chr, the value is ascii-32
+	// all two-byte unit not starting with 0xaa, are 2-byte gb2312 encoding. 
+	if (length < 6)
+	{
+		return;
+	}
+	char mode;
+	message = "";
+
+	LEDMATRIX.turnOff();
+	Serial.println("receiving message");
+
+	mode = (char)payload[0];
+
+	String tt = "";
+	for (uint8_t i = 1; i < 5; i++) {
+		tt += (char)payload[i];
+	}
+
+	for (uint8_t i = 5; i < length; i++) {
+		message += (char)payload[i];
+	}
+
+	message_timestamp = millis();
+	message_lifetime = ((unsigned long)tt.toInt()) * 1000;
+	if (message_lifetime == 0)
+	{
+		return;
+	}
+	Operation = 1;
+	Serial.println("message received, ready to display");
+	Serial.println("display time " + message_lifetime);
+}
+
 
 boolean setup_wifi() {
 
@@ -157,66 +215,4 @@ void connect_mqtt() {
 			delay(2000);
 		}
 	}
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {
-
-	// first byte in message is the dispaly mode 
-	// the following 4 bytes are display time
-	// the rest bytes are data, two byte per character. first byte 0xaa are ascii characters.
-	// for ascii chr, the value is ascii-32
-	// all two-byte unit not starting with 0xaa, are 2-byte gb2312 encoding. 
-
-	Serial.println("Message arrived");
-
-	if (length<6)
-	{
-		LEDMATRIX.turnOff();
-		DisplayMode = 0;
-		return;
-	}
-	char mode;
-	message = "";
-
-	LEDMATRIX.turnOff();
-	Serial.println("receiving message");
-
-	mode = (char)payload[0];
-
-	String tt = "";
-	for (uint8_t i = 1; i < 5; i++) {
-		tt += (char)payload[i];
-	}
-
-	for (uint8_t i = 5; i < length; i++) {
-		message += (char)payload[i];
-	}
-
-	message_timestamp = millis();
-	message_lifetime = ((unsigned long)tt.toInt()) * 1000;
-
-	LEDMATRIX.setMessage(message);
-
-	switch (mode)
-	{
-	case 'm':
-		DisplayMode = 1;
-		break;
-	case 'v':
-		DisplayMode = 2;
-		break;
-	case 's':
-		DisplayMode = 3;
-		break;
-	default:
-		break;
-	}
-
-	if (message_lifetime == 0)
-	{
-		return;
-	}
-	delay(100);
-	LEDMATRIX.turnOn();
-
 }
