@@ -12,6 +12,8 @@ https://github.com
 #include <FS.h>   // Include the SPIFFS library
 
 #define nextT 1000
+//if true, hang it upside up
+#define frameOrientation  false
 
 static const uint8_t font8x16_basic[] = {
 	/*   (32) */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

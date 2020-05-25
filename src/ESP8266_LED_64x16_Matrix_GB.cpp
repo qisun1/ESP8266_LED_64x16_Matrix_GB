@@ -7,8 +7,7 @@
 #include "ESP8266_LED_64x16_Matrix_GB.h"
 #include "Arduino.h"
 
-//if true, hang it upside up
-#define frameOrientation  false
+
 
 ESP8266_LED_64x16_Matrix_GB::ESP8266_LED_64x16_Matrix_GB()
 {
@@ -349,13 +348,13 @@ void  ESP8266_LED_64x16_Matrix_GB::ISR_TIMER_SCAN()
 
 #if (frameOrientation )
 	for (uint8_t column = 0; column < columnNumber; column++) {
-		uint8_t index = column + (scanRow *(columnNumber + 1));
+		uint16_t index = column + (scanRow *(columnNumber + 1));
 		//shiftOut(data_R1, clockPin, MSBFIRST, buffer[index]);
 		shiftOutFast(buffer[index]);
 	}
 #else
 	for (uint8_t column = 0; column < columnNumber; column++) {
-		uint8_t index = column + (scanRow *(columnNumber + 1));
+		uint16_t index = column + (scanRow *(columnNumber + 1));
 		//shiftOut(data_R1, clockPin, MSBFIRST, buffer[index]);
 		shiftOutFast(buffer[bufferSize - 1 - index]);
 	}

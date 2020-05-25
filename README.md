@@ -7,7 +7,7 @@ I am not able to keep wifi on while displaying messages. I have to toggle betwee
 
 For pin connections, please refer to this page: https://github.com/qisun1/ESP8266_LED_64x16_Matrix
 
-To change panel orientation, modify the library ESP8266_LED_64x16_Matrix_GB.cpp to "#define frameOrientation  true"
+To change panel orientation, modify the library header ESP8266_LED_64x16_Matrix_GB.h to "#define frameOrientation  true"
 
 ## Examples
 
