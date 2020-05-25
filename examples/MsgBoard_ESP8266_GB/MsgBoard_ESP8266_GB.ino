@@ -71,6 +71,8 @@ void setup()
 	//screen mode 0: 0:64x16 single color red
 	//number of panels: 1
 	LEDMATRIX.setDisplay(0, 1);
+	LEDMATRIX.turnOff();
+	
 	Serial.println("display_set");
 
 	Operation == 0;
